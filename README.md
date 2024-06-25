@@ -1,4 +1,4 @@
-# python_practice
+# Python Scripts
 A place to keep stuff while I'm learning Python  
 
 **num.py**  
