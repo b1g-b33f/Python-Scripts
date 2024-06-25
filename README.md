@@ -1,5 +1,8 @@
 # python_practice
 A place to keep stuff while I'm learning Python  
 
--num.py  
-a quick numberlist generator
+**num.py**  
+- Quick numberlist generator
+
+**scan.py**
+- A work in progress for initial web app enumeration
