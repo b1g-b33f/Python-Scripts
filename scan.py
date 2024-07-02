@@ -15,7 +15,7 @@ target = args[0]
 port = "443" if len(args) < 2 else args[1]
 log = f"logs/{date.isoformat(date.today()).replace('-', '')}_{target}.log"
 proxies = {"http": "http://127.0.0.1:8080", "https": "http://127.0.0.1:8080"}
-wordlist = "/home/kaliuser/SecLists/Discovery/DNS/subdomains-top1million-5000.txt"
+wordlist = "/usr/share/wordlists/SecLists/Discovery/DNS/subdomains-top1million-5000.txt"
 cmds = [
         f"nmap -T4 -A -vv -Pn {target}",
         f"nmap -p {port} --script http-auth,http-auth-finder {target}",
