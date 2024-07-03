@@ -8,6 +8,7 @@ from datetime import date
 import time
 import pyautogui
 import psutil
+import threading
 
 # ANSI escape codes for colored output
 RED = "\033[91m"
@@ -77,35 +78,40 @@ try:
 except Exception:
     exit(f"{RED}Can't reach target on port {port}.{RESET}")
 
+def run_command(cmd):
+    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    out, _ = process.communicate()
+    return out.decode('utf-8')
+
+def clickjack_test(cmd, log_dir):
+    print(f"{YELLOW}Running Clickjacking Test and taking a screenshot in 5 seconds...{RESET}")
+    clickjack_process = subprocess.Popen(cmd, shell=True)
+    time.sleep(5)  # Wait for 5 seconds
+    screenshot_path = f"{log_dir}/clickjack_screenshot.png"
+    try:
+        pyautogui.screenshot(screenshot_path)
+        print(f"{GREEN}Screenshot taken and saved to {screenshot_path}{RESET}")
+    except Exception as e:
+        print(f"{RED}Failed to take screenshot: {e}{RESET}")
+    # Close Firefox after taking the screenshot
+    try:
+        for proc in psutil.process_iter():
+            if 'firefox' in proc.name().lower():
+                proc.terminate()
+        print(f"{GREEN}Firefox browser closed.{RESET}")
+    except Exception as e:
+        print(f"{RED}Failed to close Firefox: {e}{RESET}")
+
 # Run the selected commands and log the output
 with open(log, 'a') as f:
     for cmd in selected_cmds:
-        print(f"{YELLOW}RUNNING: {cmd}{RESET}")
-        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        out, _ = process.communicate()
-        output = out.decode('utf-8')
-        f.write(f"\n\nRUNNING: {cmd}\n{output}\n")
-        print(f"{GREEN}Completed: {cmd}{RESET}")
-        
-        # If running the clickjacking test, take a screenshot 5 seconds after starting the script
         if "clickjack" in cmd:
-            print(f"{YELLOW}Running Clickjacking Test and taking a screenshot in 5 seconds...{RESET}")
-            clickjack_process = subprocess.Popen(cmd, shell=True)
-            time.sleep(5)  # Wait for 5 seconds
-            screenshot_path = f"{log_dir}/clickjack_screenshot.png"
-            try:
-                pyautogui.screenshot(screenshot_path)
-                print(f"{GREEN}Screenshot taken and saved to {screenshot_path}{RESET}")
-            except Exception as e:
-                print(f"{RED}Failed to take screenshot: {e}{RESET}")
-            # Close Firefox after taking the screenshot
-            try:
-                for proc in psutil.process_iter():
-                    if 'firefox' in proc.name().lower():
-                        proc.terminate()
-                print(f"{GREEN}Firefox browser closed.{RESET}")
-            except Exception as e:
-                print(f"{RED}Failed to close Firefox: {e}{RESET}")
+            threading.Thread(target=clickjack_test, args=(cmd, log_dir)).start()
+        else:
+            print(f"{YELLOW}RUNNING: {cmd}{RESET}")
+            output = run_command(cmd)
+            f.write(f"\n\nRUNNING: {cmd}\n{output}\n")
+            print(f"{GREEN}Completed: {cmd}{RESET}")
 
     print(f"{YELLOW}Gathering headers and cookies from the target...{RESET}")
     resp = requests.get(f"https://{target}", proxies=proxies, verify=False)
@@ -128,5 +134,6 @@ with open(log, 'a') as f:
     print(f"{GREEN}Headers and cookies have been logged.{RESET}")
 
 print(f"{BLUE}Scanning and logging completed. Check the log file at {log}.{RESET}")
+
 
 
