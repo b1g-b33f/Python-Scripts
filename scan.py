@@ -90,6 +90,7 @@ with open(log, 'a') as f:
         # If running the clickjacking test, take a screenshot 5 seconds after starting the script
         if "clickjack" in cmd:
             print(f"{YELLOW}Running Clickjacking Test and taking a screenshot in 5 seconds...{RESET}")
+            clickjack_process = subprocess.Popen(cmd, shell=True)
             time.sleep(5)  # Wait for 5 seconds
             screenshot_path = f"{log_dir}/clickjack_screenshot.png"
             try:
@@ -127,4 +128,5 @@ with open(log, 'a') as f:
     print(f"{GREEN}Headers and cookies have been logged.{RESET}")
 
 print(f"{BLUE}Scanning and logging completed. Check the log file at {log}.{RESET}")
+
 
