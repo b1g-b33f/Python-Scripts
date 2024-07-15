@@ -97,25 +97,6 @@ def gather_headers_and_cookies(target_url, log_file, proxies):
         f.write(f"\n{BRIGHT_CYAN}{'='*10} COMPLETED: GATHERING HEADERS AND COOKIES {'='*10}{RESET}\n\n")
     print(f"{GREEN}Headers and cookies have been logged.{RESET}")
 
-def scan_internal_subdomains(target, protocol, port, log_dir):
-    """Scan for internal subdomains using a brute-force approach."""
-    subdomain_list = "/usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-5000.txt"
-    subdomain_file = f"{log_dir}/subdomains.txt"
-    with open(f"{log_dir}/subdomains_results.txt", 'w') as f:
-        f.write(f"{BRIGHT_GREEN}{'='*10} SCANNING INTERNAL SUBDOMAINS {'='*10}{RESET}\n")
-        cmd = f"ffuf -u {protocol}://{{}}.{target}:{port} -w {subdomain_list} -H 'Host: FUZZ.{target}' -o {subdomain_file} -x http://127.0.0.1:8080"
-        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        try:
-            out, _ = process.communicate(timeout=300)  # Timeout after 5 minutes
-        except subprocess.TimeoutExpired:
-            process.kill()
-            out, _ = process.communicate()
-            f.write(f"{RED}Command timed out.{RESET}\n")
-        output = out.decode('utf-8')
-        f.write(output)
-        f.write(f"\n{BRIGHT_CYAN}{'='*10} COMPLETED: SCANNING INTERNAL SUBDOMAINS {'='*10}{RESET}\n\n")
-    print(f"{GREEN}Internal subdomains have been scanned and saved to {subdomain_file}{RESET}")
-
 def main():
     if os.geteuid() != 0:
         exit(f"{RED}run as sudo{RESET}")
@@ -188,7 +169,8 @@ def main():
         if desc == "Gather Headers and Cookies":
             gather_headers_and_cookies(target_url, log_file, PROXIES)
         elif desc == "Scan Internal Subdomains":
-            scan_internal_subdomains(target, protocol, port, log_dir)
+            print(f"{YELLOW}Running subdomain scan...{RESET}")
+            run_command(desc, cmd.format(target), log_file)  # Format the subdomain command
         elif protocol == "http" and desc == "Run TESTSSL":
             print(f"{YELLOW}Skipping {desc} because the protocol is http.{RESET}")
             continue
@@ -201,6 +183,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
